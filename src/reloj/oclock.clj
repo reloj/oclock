@@ -5,6 +5,57 @@
             [clojure.set]))
 
 
+(defn o= [o a b]
+  (conde [(== o true)
+          (== a b)]
+         [(== o false)
+          (!= a b)]))
+
+(defn oif [res cond if else]
+  "Note that side effects that are short-circuited in 'else' statements when true is not
+   something that really makes sense in a relational oif."
+  (conde [(nafc membero cond [nil false])
+          (== res if)]
+         [(membero cond [nil false])
+          (== res else)]))
+
+(defn owhen [res cond if]
+  (oif res cond if nil))
+
+(comment
+  (run* [r] (oif r true 1 2))
+  (run* [x] (fresh [q] (oif 1 q 1 2) (o= q 4 x)))
+  (run* [x] (fresh [q] (oif 2 q 1 2) (o= q 4 x)))
+
+  (run* [q x y z]
+    (with-orels q [o= oif] ; q is used for all base rels; fresh lvars are created for things in place
+      (oif false y z)
+      (oif (o= 1 x)
+           4 x))))
+
+(comment
+  (defn ocount [])
+
+  (defn oor []) ; with short circuiting? does it make sense?
+  (defn oand [])
+
+  (defn ofn []) ; iterate over simplest-to-more complex trees of all whitelisted non-side-effect clojure.core functions. look into re-find
+  (defn omap [])
+  (defn olet [])
+  (defn oapply [])
+
+  (defn ocond [])
+
+  (defn oassoc []) ; featureo omerge
+  (defn oassoc-in [])
+  (defn oconj [])
+  (defn oget [])
+  (defn oget-in [])
+
+  (defn o-> [])
+  (defn o->> []))
+
+
 (defn ocoll? [elts]
   "A relational coll? - a collection is composed of things."
   (fresh [x]
@@ -75,7 +126,7 @@
         (if (empty? unfound)
           s
           (unify s
-                 (set (select-keys u unfound)) ; TODO does not work because unify 
+                 (set (select-keys u unfound)) ; TODO does not work because unify
                  (set (apply dissoc v found)))))))) ; does not understand sets.
 
 ;; No functiona porque los sets no unifican:
@@ -167,5 +218,3 @@
 ;               (partial-map {:a q :b 1})))
 ;Error printing return value (IllegalArgumentException) at clojure.lang.RT/seqFrom (RT.java:553).
 ;Don't know how to create ISeq from: java.lang.Long
-
-
