@@ -65,6 +65,40 @@
   "Pending: How to determine this is closed."
   succeed)
 
+(defne any-placeo
+  "A generalization of membero and rembero, and, backwards, a 'random-popo'."
+  [x l o]
+  ([_ _ [x . l]])
+  ([_ [l1 . ls] [l1 . os]]
+   (any-placeo x ls os)))
+
+(run* [p q] (any-placeo p q [1 2 3]))
+
+(defn not-emptyo [coll]
+  (fresh [elt rest]
+    (conso elt rest coll)))
+
+(defne set==
+  "Unification of 2 colls as if they were sets"
+  [seta setb]
+  ([[] []])
+  ([_ _]
+   (fresh [elt a b]
+     (any-placeo elt a seta)
+     (any-placeo elt b setb)
+     (set== a b))))
+
+(run* [q] (set== [1 2][2 q])) ; TODO esto devuelve duplicados
+(run* [q] (set== [1][q]))
+
+(run* [p q] (conso p q {:a 1})) ; WRONG conso only works on ordered colls, maps are unordered colls
+(run* [p q] (conso p q #{2 1})) ; WRONG conso only works on ordered colls, sets are unordered colls
+
+(def kv== set==)
+
+(run* [q] (kv== {:a 1} q))
+(run* [q] (kv== {:a 1 :b 2 :c 3} {:a 1 :b 2 q 3}))
+
 (defn -same-kvs [a b]
   (clojure.set/intersection (set a) (set b)))
 
@@ -95,7 +129,7 @@
   (apply hash-map (repeatedly (* 2 x) lvar)))
 
 (defn unify-sets [a b]
-  (let [int (clojure.set/intersection a b)
+  (let [int (clojure.set/intersection a b) ; this only works with reified sets, not lvars
         ua (clojure.set/difference a int)
         ub (clojure.set/difference b int)]
     (if (= (count ua) (count ub))
@@ -106,37 +140,6 @@
 ;(defn unground-map [m]
 ;  (or* (map #(== m (-lvar-map-size-x %))
 ;            (range))))
-
-
-;; Adapted from clojure.core.logic líne 946, it might make more sense to reimplement unify-with-map* as below
-(in-ns 'clojure.core.logic)
-(println "reloj.oclock: Redifining clojure.core.logic/unify-with-map* to also unify keys...")
-(defn unify-with-map* [u v s]
-  (println "Defining a map!")
-  (when (clojure.core/== (count u) (count v))
-    (loop [ks (keys u) s s found '() unfound '()]
-      (if (seq ks)
-        (let [kf (first ks)
-              vf (get v kf ::not-found)]
-          (if (identical? vf ::not-found)
-            (do (println kf " not found")(recur (next ks) s found (cons kf unfound)) )
-            (if-let [s (unify s (get u kf) vf)]
-              (do (println kf " found")(recur (next ks) s (cons kf found) unfound) )
-              nil)))
-        (if (empty? unfound)
-          s
-          (unify s
-                 (set (select-keys u unfound)) ; TODO does not work because unify
-                 (set (apply dissoc v found)))))))) ; does not understand sets.
-
-;; No functiona porque los sets no unifican:
-;; (run* [q] (== #{q} #{1}))
-;; (unify empty-s (set {:a 1})(set {(lvar) 1}))
-(in-ns 'reloj.oclock)
-
-(defn kv== [mapa mapb]
-  (== (set mapa)
-      (set mapb)))
 
 (defn omerge
   "Relates the merged map ab as the union of a and b.
