@@ -5,6 +5,29 @@
             [clojure.set]))
 
 
+;; Design approach #1: relational spirit, without caring for what if or when would return.
+
+(defmacro oif
+  "A relational if. It transforms:
+      (oif (membero q [1 2])
+           (== r 3)
+           (!= r 3))
+  into:
+      (conda [(membero q [1 2])
+              (== r 3)]
+             [(!= r 3)])
+  echoing a procedural if."
+  [if then else]
+  `(conda
+    [~if ~then]
+    [~else]))
+
+(defmacro owhen [if then]
+  "Relational when. If condition is met new relation is required. If not, it succeeds (a->b is true when a is false)"
+  `(oif ~if ~then succeed))
+
+;; Design approach #2: strict rule of procedural result being first relational parameter. Less "relational-native" but helps with code transcription.
+
 (defn o= [o a b]
   (conde [(== o true)
           (== a b)]
