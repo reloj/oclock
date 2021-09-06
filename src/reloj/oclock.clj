@@ -153,12 +153,15 @@
 
 (defn unify-sets [a b]
   (let [int (clojure.set/intersection a b) ; this only works with reified sets, not lvars
-        ua (clojure.set/difference a int)
+        ua (clojure.set/difference a int) ; TODO deprecate when unify-with-set works
         ub (clojure.set/difference b int)]
     (if (= (count ua) (count ub))
        (or* (map #(== (vec ua) %)
                  (clojure.math.combinatorics/permutations ub)))
        fail)))
+
+(comment
+  (run* [q] (unify-sets #{1 2} #{q 2})))
 
 ;(defn unground-map [m]
 ;  (or* (map #(== m (-lvar-map-size-x %))
